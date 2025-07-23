@@ -11,7 +11,7 @@ class Course(models.Model):
     #ForeignKey links each course to a user
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="courses")
     
-    name = models.CharField(max_length=1000)
+    name = models.CharField(max_length=100)
 
     #color for calendar ui, defaults to light green, wants hex code
     color_hex = models.CharField(max_length=7, default='#90EE90') 

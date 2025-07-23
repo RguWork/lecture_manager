@@ -1,6 +1,13 @@
 from rest_framework import viewsets, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+
+from django.utils import timezone
+import datetime
+import zoneinfo
+
 from .models import Course, Lecture
-from .serializers import CourseSerializer, LectureSerializer
+from .serializers import CourseSerializer, LectureSerializer, SlotSerializer, WEEKDAYS
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
@@ -34,3 +41,6 @@ class LectureViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(end_dt__date__lte=to_str)
 
         return queryset
+    
+
+# @api_view(["POST"])
