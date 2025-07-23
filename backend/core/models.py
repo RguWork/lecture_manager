@@ -37,5 +37,5 @@ class Lecture(models.Model):
         ordering = ["start_dt"]
 
     def __str__(self):
-        return f"{self.name} - {self.start_dt:%Y-%m-%d %H:%M}"
+        return f"{self.course.name} - {self.start_dt:%Y-%m-%d %H:%M}"
 
