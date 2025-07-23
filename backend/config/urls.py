@@ -18,10 +18,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from core.api import CourseViewSet
+from core.api import CourseViewSet, LectureViewSet
 
 router = DefaultRouter() #creates a router object that can auto generate REST urls for a viewset
 router.register(r"courses", CourseViewSet, basename="course")
+router.register(r"lectures", LectureViewSet, basename="lecture")
 
 urlpatterns = [
     path("admin/", admin.site.urls),

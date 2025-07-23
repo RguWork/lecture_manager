@@ -29,8 +29,8 @@ class LectureViewSet(viewsets.ReadOnlyModelViewSet):
 
         #filter by optional date param
         if from_str:
-            queryset = Lecture.objects.filter(start_dt__date__gte=from_str)
+            queryset = queryset.filter(start_dt__date__gte=from_str)
         if to_str:
-            queryset = Lecture.objects.filter(end_dt__date__lte=to_str)
+            queryset = queryset.filter(end_dt__date__lte=to_str)
 
         return queryset
