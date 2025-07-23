@@ -8,13 +8,34 @@ User = get_user_model() #ref to the proj's user model
 class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="courses")
     #ForeignKey links each course to a user
-
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="courses")
+    
     name = models.CharField(max_length=1000)
 
-    color_hex = models.CharField(max_length=7, default='#90EE90') 
     #color for calendar ui, defaults to light green, wants hex code
+    color_hex = models.CharField(max_length=7, default='#90EE90') 
 
     def __str__(self):
         return self.name
+    
+
+#creates a table called core_lecture
+class Lecture(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    #links each lecture to a course
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="lectures")
+    
+    #start and end times
+    start_dt = models.DateTimeField()
+    end_dt = models.DateTimeField()
+    location = models.CharField(max_length=100, blank=True)
+
+    class Meta():
+        #define table sorted ordering
+        ordering = ["start_dt"]
+
+    def __str__(self):
+        return f"{self.name} - {self.start_dt:%Y-%m-%d %H:%M}"
+
