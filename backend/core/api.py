@@ -45,7 +45,7 @@ class LectureViewSet(viewsets.ReadOnlyModelViewSet):
 
         return queryset
     
-class TimetableImportView(APIView):
+class ImportTimetable(APIView):
     """
     POST endpoint for bulk-creating lectures.
 
