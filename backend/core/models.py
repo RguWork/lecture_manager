@@ -8,7 +8,7 @@ User = get_user_model() #ref to the proj's user model
 class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    #ForeignKey links each course to a user
+    #links each course to a user that created the course
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="courses")
     
     name = models.CharField(max_length=100)
@@ -38,4 +38,26 @@ class Lecture(models.Model):
 
     def __str__(self):
         return f"{self.course.name} - {self.start_dt:%Y-%m-%d %H:%M}"
+    
+#creates a table called core_attendance
+class Attendance(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    #links each attendance object to a lecture and user, where user is the person that attended
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="attendances")
+    lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE, related_name="attendances")
+
+    attended = models.BooleanField(default=False)
+    note_upload = models.FileField(upload_to="notes/", null=True, blank=True) 
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta():
+        unique_together = ("user", "lecture")
+        ordering = ["lecture__start_dt"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lecture} - {'✔' if self.attended else '❌'}"
+
 

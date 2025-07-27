@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Lecture
+from .models import Course, Lecture, Attendance
 
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
@@ -39,3 +39,15 @@ class SlotSerializer(serializers.Serializer):
         if data["from_date"] >= data["to_date"]:
             raise serializers.ValidationError("the from_date must be on/before the to_date")
         return data
+    
+class AttendanceSerializer(serializers.ModelSerializer):
+    #define how the attendance model should be parsed as when in json form
+    course_name = serializers.CharField(source="lecture.course.name", read_only=True)
+    lecture_start_dt = serializers.DateTimeField(source="lecture.start_dt", read_only=True)
+    
+    class Meta:
+        model = Attendance
+
+        #lecture saves the uuid of the lecture this attendance object corresponds to
+        fields = ['id', 'lecture', 'course_name', 'lecture_start_dt', 'attended', 'note_upload', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
