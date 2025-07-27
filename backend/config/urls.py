@@ -21,6 +21,8 @@ from rest_framework.routers import DefaultRouter
 from core.api import CourseViewSet, LectureViewSet
 
 router = DefaultRouter() #creates a router object that can auto generate REST urls for a viewset
+
+#register viewsets and define url patterns for them so we can access as a link
 router.register(r"courses", CourseViewSet, basename="course")
 router.register(r"lectures", LectureViewSet, basename="lecture")
 

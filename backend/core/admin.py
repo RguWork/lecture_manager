@@ -3,6 +3,7 @@ from .models import Course, Lecture
 
 # Register your models here.
 
+#register models to be able tinker as an admin
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = ("name", "user", "color_hex")

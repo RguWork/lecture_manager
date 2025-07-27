@@ -30,7 +30,7 @@ class Lecture(models.Model):
     #start and end times
     start_dt = models.DateTimeField()
     end_dt = models.DateTimeField()
-    location = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=100)
 
     class Meta():
         #define table sorted ordering

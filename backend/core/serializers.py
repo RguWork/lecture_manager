@@ -4,11 +4,13 @@ from .models import Course, Lecture
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 class CourseSerializer(serializers.ModelSerializer):
+    #define how the course model should be parsed as when in json form
     class Meta:
         model = Course
         fields = ['id', 'name', 'color_hex']
 
 class LectureSerializer(serializers.ModelSerializer):
+    #define how the lecture model should be parsed as when in json form
     course_name = serializers.CharField(source="course.name", read_only=True)
 
     class Meta:
@@ -18,17 +20,22 @@ class LectureSerializer(serializers.ModelSerializer):
 
 
 class SlotSerializer(serializers.Serializer):
+    #defines a Slot object, which is a recurring lecture time
+    #so they all should have a course, day of the week, start and end time, date range, and location
+    #showing that for that course, there is a day of the week every week for a date range
+    #that has a lecture within the specificed time at said location.
     course = serializers.CharField(max_length = 100)
     weekday = serializers.ChoiceField(choices=WEEKDAYS)
     start_time = serializers.TimeField()
     end_time = serializers.TimeField()
     from_date = serializers.DateField()
     to_date = serializers.DateField()
+    location = serializers.CharField(max_length=100)
 
     def validate(self, data):
-        if data["start_time"] > data["end_time"]:
+        if data["start_time"] >= data["end_time"]:
             raise serializers.ValidationError("the start_time must be before the end_time")
         
-        if data["from_date"] > data["to_date"]:
+        if data["from_date"] >= data["to_date"]:
             raise serializers.ValidationError("the from_date must be on/before the to_date")
         return data
