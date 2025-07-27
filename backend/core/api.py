@@ -7,8 +7,8 @@ from django.utils import timezone
 import datetime
 import zoneinfo
 
-from .models import Course, Lecture
-from .serializers import CourseSerializer, LectureSerializer, SlotSerializer, WEEKDAYS
+from .models import Course, Lecture, Attendance
+from .serializers import CourseSerializer, LectureSerializer, SlotSerializer, AttendanceSerializer, WEEKDAYS
 
 class CourseViewSet(viewsets.ModelViewSet):
     #defines how to handle intermediate actions when the course api is called
@@ -95,4 +95,22 @@ class ImportTimetable(APIView):
 
         return Response({"created": created}, status = 201)
 
+class AttendanceViewSet(viewsets.ModelViewSet):
+    #defines how to handle intermediate actions when the attendance api is called
+    serializer_class = AttendanceSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        queryset = Attendance.objects.filter(user = self.request.user)
+
+        #optional filter param
+        course_name = self.request.query_params.get("course_name")
+
+        if course_name:
+            queryset = queryset.filter(lecture__course__name__icontains=course_name)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        #save the new attendance object with the current user as owner?
+        serializer.save(user=self.request.user)
