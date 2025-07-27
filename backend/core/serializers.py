@@ -12,11 +12,20 @@ class CourseSerializer(serializers.ModelSerializer):
 class LectureSerializer(serializers.ModelSerializer):
     #define how the lecture model should be parsed as when in json form
     course_name = serializers.CharField(source="course.name", read_only=True)
+    attended = serializers.SerializerMethodField()
 
     class Meta:
         model = Lecture
         #course is the course uuid for actual linking, course_name is the actual string name for readability
-        fields = ['id', 'course', 'course_name', 'start_dt', 'end_dt', 'location']
+        fields = ['id', 'course', 'course_name', 'start_dt', 'end_dt', 'location', 'attended']
+
+    def get_attended(self, obj):
+        #returns corresponding attendance record for a user
+        #we need a seperate def since this param is defined by attendance object itself
+        user = self.context["request"].user
+        record = obj.attendances.filter(user=user).first()
+        return record.attended if record else None
+
 
 
 class SlotSerializer(serializers.Serializer):
