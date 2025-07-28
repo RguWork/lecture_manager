@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from core.api import CourseViewSet, LectureViewSet, AttendanceViewSet, ImportTimetable
+from core.views import CourseViewSet, LectureViewSet, AttendanceViewSet, ImportTimetable, SummarizeNotes
 
 router = DefaultRouter() #creates a router object that can auto generate REST urls for a viewset
 
@@ -30,5 +30,6 @@ router.register(r"attendances", AttendanceViewSet, basename="attendance")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
-    path("api/schedule/import/", ImportTimetable.as_view(), name="import-timetable")
+    path("api/schedule/import/", ImportTimetable.as_view(), name="import-timetable"),
+    path("api/attendances/summarize/", SummarizeNotes.as_view(), name="summarize-notes")
 ]
