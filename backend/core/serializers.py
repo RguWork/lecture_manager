@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import Course, Lecture, Attendance
 
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -17,7 +18,7 @@ class LectureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lecture
         #course is the course uuid for actual linking, course_name is the actual string name for readability
-        fields = ['id', 'course', 'course_name', 'start_dt', 'end_dt', 'location', 'attended']
+        fields = ['id', 'course', 'course_name', 'start_dt', 'end_dt', 'location', 'attended', 'status']
 
     def get_attended(self, obj):
         #returns corresponding attendance record for a user
@@ -25,6 +26,25 @@ class LectureSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         record = obj.attendances.filter(user=user).first()
         return record.attended if record else None
+
+    def get_status(self, obj):
+        user = self.context["request"].user
+        now = timezone.now()
+
+        #upcoming
+        if obj.start_dt > now:
+            return "upcoming"
+        
+        attendance = obj.attendances.filter(user = user).first()
+        
+        #missed/attended
+        if attendance:
+            #summarized
+            if attendance.summary:
+                return "summarized"
+            return "attended"
+        return "missed"
+
 
 
 
