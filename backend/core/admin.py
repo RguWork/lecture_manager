@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Course, Lecture
+from .models import Course, Lecture, Attendance
 
 # Register your models here.
 
@@ -14,3 +14,9 @@ class LectureAdmin(admin.ModelAdmin):
     list_display = ("course", "start_dt", "end_dt", "location")
     list_filter = ("course", "start_dt")
     search_fields = ("course__name", "location")
+
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = ("user", "lecture", "attended", "created_at", "updated_at")
+    list_filter = ("user", "lecture", "attended")
+    search_fields = ("user__username", "lecture__course__name", "lecture__start_dt")
