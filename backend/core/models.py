@@ -1,4 +1,6 @@
 import uuid #to generate ids
+import os
+from django.conf import settings
 from django.db import models
 from django.contrib.auth import get_user_model
 
@@ -39,6 +41,15 @@ class Lecture(models.Model):
     def __str__(self):
         return f"{self.course.name} - {self.start_dt:%Y-%m-%d %H:%M}"
     
+
+#ensures that we use the aws s3 storage instead of local storage
+if os.getenv("USE_S3") == "TRUE":
+    from core.storage_backends import NoteUploadS3Storage
+    note_storage = NoteUploadS3Storage()
+else:
+    from django.core.files.storage import FileSystemStorage
+    note_storage = FileSystemStorage(location=os.path.join(settings.BASE_DIR, "notes"))
+
 #creates a table called core_attendance
 class Attendance(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -48,7 +59,7 @@ class Attendance(models.Model):
     lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE, related_name="attendances")
 
     attended = models.BooleanField(default=False)
-    note_upload = models.FileField(upload_to="notes/", null=True, blank=True) 
+    note_upload = models.FileField(upload_to="", storage=note_storage, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
