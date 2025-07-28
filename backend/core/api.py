@@ -7,10 +7,12 @@ from django.utils import timezone
 import os
 import datetime
 import zoneinfo
-import openai
+
 
 from .models import Course, Lecture, Attendance
 from .serializers import CourseSerializer, LectureSerializer, SlotSerializer, AttendanceSerializer, WEEKDAYS
+
+from core.utils.summarization import summarize_text, extract_text_from_file
 
 class CourseViewSet(viewsets.ModelViewSet):
     #defines how to handle intermediate actions when the course api is called
@@ -118,19 +120,6 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-def summarize_text(text):
-    response = openai.ChatCompletion.create(
-        model = "gpt-3.5-turbo",
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant that summarizes lecture notes in a digestable way."},
-            {"role": "user", "content": f"Summarize the following lecture:\n\n{text}"}
-        ],
-        max_tokens=667,
-        temperature=0.5,
-    )
-    return response["choices"][0]["message"]["content"]
-
 class SummarizeNotes(APIView):
     """
     POST endpoint for summarizing notes
@@ -148,23 +137,19 @@ class SummarizeNotes(APIView):
             attendance_obj = Attendance.objects.get(id = attendance_id, user=request.user)
         except Attendance.DoesNotExist:
             return Response({'error': f"Attendance not found: {attendance_id}"}, status=404)
-
-        #get attendance_id's associated object, which we have
-        #get the object's summary
-        #if summary exists, return summary
-        #else, call open ai api
-
         note_summary = attendance_obj.summary
 
+        #if we have a summary return it
         if note_summary:
             return Response({'summary': note_summary}, status=200)
         
-        #check if there is something to summarize and if its readable
+        #check if there is something to summarize
         if not attendance_obj.note_upload:
             return Response({"error": "No note uploaded for this attendance."}, status=404)
         
+        #try to read it
         try:
-            note_text = attendance_obj.note_upload.read().decode("utf-8")
+            note_text = extract_text_from_file(attendance_obj.note_upload)
         except Exception:
             return Response({"error": "Unable to read uploaded note. Please reupload."}, status=500)
         
