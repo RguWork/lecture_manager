@@ -31,5 +31,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
     path("api/schedule/import/", ImportTimetable.as_view(), name="import-timetable"),
-    path("api/attendances/summarize/", SummarizeNotes.as_view(), name="summarize-notes")
+    path("api/summarize/", SummarizeNotes.as_view(), name="summarize-notes")
 ]

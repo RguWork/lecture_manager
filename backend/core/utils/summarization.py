@@ -3,18 +3,18 @@ import openai
 from docx import Document
 from PyPDF2 import PdfReader
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def summarize_text(text):
-    response = openai.ChatCompletion.create(
-        model = "gpt-3.5-turbo",
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant that summarizes lecture notes in a digestable way."},
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that summarizes lecture notes in a digestible way."},
             {"role": "user", "content": f"Summarize the following lecture:\n\n{text}"}
         ],
         max_tokens=667,
         temperature=0.5,
     )
-    return response["choices"][0]["message"]["content"]
+    return response.choices[0].message.content
 
 def extract_text_from_file(file):
     name = file.name
