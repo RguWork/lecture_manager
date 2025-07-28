@@ -1,1 +1,24 @@
-hi
+Lecture Title: Introduction to Photosynthesis
+
+Today we discussed the process by which plants convert sunlight into energy, known as photosynthesis. This primarily occurs in the chloroplasts of plant cells.
+
+Key terms:
+- Chlorophyll: the green pigment that absorbs light
+- Stomata: small pores on leaves that allow gas exchange
+- Glucose: sugar produced as a result of the process
+
+The overall chemical equation is:
+6CO2 + 6H2O + sunlight → C6H12O6 + 6O2
+
+This means carbon dioxide and water, in the presence of sunlight, are converted into glucose and oxygen.
+
+Two main stages:
+1. Light-dependent reactions: occur in the thylakoid membranes; convert light energy into chemical energy (ATP and NADPH)
+2. Light-independent reactions (Calvin Cycle): occur in the stroma; use ATP and NADPH to fix CO2 and produce glucose
+
+Importance:
+- Provides the base of the food chain
+- Removes CO2 from the atmosphere
+- Produces oxygen we breathe
+
+Professor ended by mentioning how photosynthesis efficiency can vary depending on environmental factors like temperature, light intensity, and CO2 concentration.

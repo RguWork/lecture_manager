@@ -6,7 +6,6 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model() #ref to the proj's user model
 
-#creates a table called core_course (app_label+classname)
 class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -22,7 +21,6 @@ class Course(models.Model):
         return self.name
     
 
-#creates a table called core_lecture
 class Lecture(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -50,7 +48,6 @@ else:
     from django.core.files.storage import FileSystemStorage
     note_storage = FileSystemStorage(location=os.path.join(settings.BASE_DIR, "notes"))
 
-#creates a table called core_attendance
 class Attendance(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -64,11 +61,13 @@ class Attendance(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    #LLM-generated summary attached for the note
+    summary = models.TextField(null=True, blank=True)
+
     class Meta():
         unique_together = ("user", "lecture")
         ordering = ["lecture__start_dt"]
 
     def __str__(self):
         return f"{self.user.username} - {self.lecture} - {'✔' if self.attended else '❌'}"
-
 
