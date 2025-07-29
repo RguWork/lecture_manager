@@ -84,10 +84,24 @@ class CourseDashboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
 
-        fields = ['id', 'name', 'color_hex', 'lectures']
+        fields = ['id', 'name', 'color_hex', 'lectures', 'percentage']
     
     def get_lectures(self, obj):
         user = self.context["request"].user
         lectures = obj.lectures.all().order_by("start_dt")
 
         return LectureSerializer(lectures, many=True, context=self.context).data
+    
+    def get_percentage(self, obj):
+        user = self.context["request"].user
+        lectures = obj.lectures.all()
+
+        total_lecs = lectures.count()
+
+        if total_lecs == 0:
+            #for divide by 0
+            return 0
+
+        attended = lectures.filter(attendances__attended = True, attendances__user = user)
+
+        return (attended/total_lecs) * 100

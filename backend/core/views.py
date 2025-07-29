@@ -174,4 +174,4 @@ class DashboardView(APIView):
     def get(self, request):
         courses = Course.objects.filter(user = request.user)
         serializer = CourseDashboardSerializer(courses, many=True, context = {"request":request})
-        return Response({"courses": serializer.data, "percent_attended": })
+        return Response({"courses": serializer.data})
