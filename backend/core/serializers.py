@@ -14,6 +14,8 @@ class LectureSerializer(serializers.ModelSerializer):
     #define how the lecture model should be parsed as when in json form
     course_name = serializers.CharField(source="course.name", read_only=True)
     attended = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Lecture
@@ -33,6 +35,8 @@ class LectureSerializer(serializers.ModelSerializer):
 
         #upcoming
         if obj.start_dt > now:
+            #note: this doesnt care if you attended. if you "preemptively" attended
+            #a lecture it will still show upcoming
             return "upcoming"
         
         attendance = obj.attendances.filter(user = user).first()
@@ -80,6 +84,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
 class CourseDashboardSerializer(serializers.ModelSerializer):
     lectures = serializers.SerializerMethodField()
+    percentage = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -104,4 +109,4 @@ class CourseDashboardSerializer(serializers.ModelSerializer):
 
         attended = lectures.filter(attendances__attended = True, attendances__user = user)
 
-        return (attended/total_lecs) * 100
+        return (attended.count()/total_lecs) * 100
