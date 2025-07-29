@@ -12,7 +12,7 @@ import zoneinfo
 
 
 from .models import Course, Lecture, Attendance
-from .serializers import CourseSerializer, LectureSerializer, SlotSerializer, AttendanceSerializer, WEEKDAYS
+from .serializers import CourseSerializer, LectureSerializer, SlotSerializer, AttendanceSerializer, CourseDashboardSerializer, WEEKDAYS
 
 from core.utils.summarization import summarize_text, extract_text_from_file
 
@@ -163,5 +163,15 @@ class SummarizeNotes(APIView):
 
         return Response({"summary": summary}, status=200)
 
- 
+class DashboardView(APIView):
+    """
+    GET endpoint for obtaining course details for dashboard specifically
 
+    Will include all associated courses and the lectures for said courses
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        courses = Course.objects.filter(user = request.user)
+        serializer = CourseDashboardSerializer(courses, many=True, context = {"request":request})
+        return Response({"courses": serializer.data, "percent_attended": })
