@@ -45,9 +45,6 @@ class LectureSerializer(serializers.ModelSerializer):
             return "attended"
         return "missed"
 
-
-
-
 class SlotSerializer(serializers.Serializer):
     #defines a Slot object, which is a recurring lecture time
     #so they all should have a course, day of the week, start and end time, date range, and location
@@ -80,3 +77,17 @@ class AttendanceSerializer(serializers.ModelSerializer):
         #lecture saves the uuid of the lecture this attendance object corresponds to
         fields = ['id', 'lecture', 'course_name', 'lecture_start_dt', 'attended', 'note_upload', 'created_at', 'updated_at', 'summary']
         read_only_fields = ['created_at', 'updated_at']
+
+class CourseDashboardSerializer(serializers.ModelSerializer):
+    lectures = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+
+        fields = ['id', 'name', 'color_hex', 'lectures']
+    
+    def get_lectures(self, obj):
+        user = self.context["request"].user
+        lectures = obj.lectures.all().order_by("start_dt")
+
+        return LectureSerializer(lectures, many=True, context=self.context).data
