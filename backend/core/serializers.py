@@ -83,6 +83,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 class CourseDashboardSerializer(serializers.ModelSerializer):
+    #define the course model for dashboard display, which now
+    #includes all lecture information associated with the course for a user
     lectures = serializers.SerializerMethodField()
     percentage = serializers.SerializerMethodField()
 
