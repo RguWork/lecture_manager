@@ -4,6 +4,7 @@ from django.shortcuts import render
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 
 
 from django.utils import timezone
@@ -175,3 +176,11 @@ class DashboardView(APIView):
         courses = Course.objects.filter(user = request.user)
         serializer = CourseDashboardSerializer(courses, many=True, context = {"request":request})
         return Response({"courses": serializer.data})
+
+class Ping(APIView):
+    '''
+    just to test backend connection
+    '''
+    permission_classes = [AllowAny]
+    def get(self, request):
+        return Response({"ok": True})

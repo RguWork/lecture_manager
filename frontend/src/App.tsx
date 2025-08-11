@@ -9,10 +9,24 @@ import WeeklySchedule from "./pages/WeeklySchedule";
 import ImportTimetable from "./pages/ImportTimetable";
 import NotFound from "./pages/NotFound";
 
+
+//ping test
+import { useEffect } from "react";
+import { ping } from "@/lib/ping";
+
+
+//------
+
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+
+  useEffect(() => {
+    ping().then(console.log).catch(console.error);
+  }, []);
+
+  return(
+    <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -28,6 +42,8 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  )
+  
+};
 
 export default App;
