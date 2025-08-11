@@ -1,0 +1,320 @@
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Upload, FileText, Brain, ChevronLeft, ChevronRight, Circle } from "lucide-react";
+import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, isAfter, isBefore, addMonths, subMonths } from "date-fns";
+import SmartBadge from "@/components/SmartBadge";
+
+
+// Mock weekly schedule data
+const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const timeSlots = Array.from({ length: 12 }, (_, i) => i + 8); // 8 AM to 7 PM
+
+const mockSchedule = [
+  {
+    id: "1",
+    course: "CS 601",
+    title: "Computer Science Fundamentals",
+    day: 1, // Monday
+    startTime: 9,
+    endTime: 11,
+    location: "Room 120",
+    attended: true,
+    hasNotes: true,
+    hasSummary: false,
+  },
+  {
+    id: "2",
+    course: "CS 705",
+    title: "Advanced Algorithms",
+    day: 2, // Tuesday
+    startTime: 14,
+    endTime: 16,
+    location: "Room 150",
+    attended: false,
+    hasNotes: false,
+    hasSummary: false,
+  },
+  {
+    id: "3",
+    course: "CS 820",
+    title: "Machine Learning",
+    day: 3, // Wednesday
+    startTime: 10,
+    endTime: 12,
+    location: "Room 205A",
+    attended: true,
+    hasNotes: true,
+    hasSummary: true,
+  },
+  {
+    id: "4",
+    course: "CS 650",
+    title: "Database Systems",
+    day: 4, // Thursday
+    startTime: 13,
+    endTime: 15,
+    location: "Lab 301",
+    attended: true,
+    hasNotes: false,
+    hasSummary: false,
+  },
+  {
+    id: "5",
+    course: "CS 601",
+    title: "Programming Lab",
+    day: 5, // Friday
+    startTime: 15,
+    endTime: 17,
+    location: "Lab 201",
+    attended: false,
+    hasNotes: false,
+    hasSummary: false,
+  },
+];
+
+export default function WeeklySchedule() {
+  const [selectedLecture, setSelectedLecture] = useState<any>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+  
+  // Calculate week bounds (±6 months)
+  const minWeek = subMonths(new Date(), 6);
+  const maxWeek = addMonths(new Date(), 6);
+  
+  const weekStart = startOfWeek(currentWeek);
+  const weekEnd = endOfWeek(currentWeek);
+
+  const handleLectureClick = (lecture: any) => {
+    setSelectedLecture(lecture);
+    setIsDrawerOpen(true);
+  };
+
+  const handleAttendanceToggle = (checked: boolean) => {
+    if (selectedLecture) {
+      setSelectedLecture({ ...selectedLecture, attended: checked });
+    }
+  };
+
+  const handleFileUpload = () => {
+    if (selectedLecture) {
+      setSelectedLecture({ ...selectedLecture, hasNotes: true });
+    }
+  };
+
+  const generateSummary = () => {
+    if (selectedLecture) {
+      setSelectedLecture({ ...selectedLecture, hasSummary: true });
+    }
+  };
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const newWeek = direction === 'prev' ? subWeeks(currentWeek, 1) : addWeeks(currentWeek, 1);
+    
+    // Check bounds
+    if (direction === 'prev' && isBefore(startOfWeek(newWeek), startOfWeek(minWeek))) return;
+    if (direction === 'next' && isAfter(startOfWeek(newWeek), startOfWeek(maxWeek))) return;
+    
+    setCurrentWeek(newWeek);
+  };
+
+  const getLectureForSlot = (day: number, time: number) => {
+    return mockSchedule.find(
+      (lecture) => lecture.day === day && time >= lecture.startTime && time < lecture.endTime
+    );
+  };
+
+  const canNavigatePrev = !isBefore(startOfWeek(subWeeks(currentWeek, 1)), startOfWeek(minWeek));
+  const canNavigateNext = !isAfter(startOfWeek(addWeeks(currentWeek, 1)), startOfWeek(maxWeek));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between animate-fade-in" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
+        <h1 className="text-2xl font-bold text-foreground">Weekly Schedule</h1>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigateWeek('prev')}
+              disabled={!canNavigatePrev}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <p className="text-muted-foreground min-w-[200px] text-center">
+              {format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigateWeek('next')}
+              disabled={!canNavigateNext}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
+        <Card className="p-6">
+        <div className="overflow-x-auto">
+          <div className="grid grid-cols-8 gap-2 min-w-[800px]">
+          {/* Header Row */}
+          <div className="font-medium text-center text-muted-foreground py-2">Time</div>
+          {weekDays.map((day) => (
+            <div key={day} className="font-medium text-center text-foreground py-2 border-b border-border">
+              {day}
+            </div>
+          ))}
+
+          {/* Time Slots */}
+          {timeSlots.map((time) => (
+            <div key={time} className="contents">
+              <div className="text-sm text-muted-foreground text-center py-4 border-r border-border">
+                {format(new Date().setHours(time, 0, 0, 0), "h:mm a")}
+              </div>
+              {weekDays.map((_, dayIndex) => {
+                const lecture = getLectureForSlot(dayIndex, time);
+                return (
+                  <div key={`${dayIndex}-${time}`} className="relative min-h-[60px] border-r border-b border-border/50">
+                    {lecture && time === lecture.startTime && (
+                      <Card
+                        className="absolute inset-x-1 top-1 cursor-pointer hover:shadow-md transition-all z-10 bg-primary/5 border-primary/20"
+                        style={{
+                          height: `${(lecture.endTime - lecture.startTime) * 60 - 8}px`,
+                        }}
+                        onClick={() => handleLectureClick(lecture)}
+                      >
+                        <div className="p-2 space-y-1 min-w-[90px]">
+                          <div className="font-medium text-sm text-primary">{lecture.course}</div>
+                          <div className="text-xs text-muted-foreground truncate">{lecture.title}</div>
+                          <div className="text-xs text-muted-foreground">{lecture.location}</div>
+                           <div className="flex flex-wrap gap-1">
+                             {lecture.attended && (
+                              <SmartBadge
+                                label="Attended"
+                                colorClass="bg-success/10 text-success"
+                                mode="initial-only"
+                              />
+                            )}
+                            {lecture.hasNotes && (
+                              <SmartBadge
+                                label="Notes"
+                                colorClass="bg-primary/10 text-primary"
+                                mode="initial-only"
+                              />
+                            )}
+                            {lecture.hasSummary && (
+                              <SmartBadge
+                                label="Summary"
+                                colorClass="bg-secondary/50 text-secondary-foreground"
+                                mode="initial-only"
+                              />
+                            )}
+                           </div>
+                        </div>
+                      </Card>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+          </div>
+        </div>
+      </Card>
+      </div>
+
+      {/* Lecture Details Drawer */}
+      <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <SheetContent className="w-[400px] sm:w-[540px]">
+          {selectedLecture && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="text-left">
+                  {selectedLecture.course}: {selectedLecture.title}
+                </SheetTitle>
+              </SheetHeader>
+              
+              <div className="space-y-6 mt-6">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium">Time:</span> {format(new Date().setHours(selectedLecture.startTime, 0, 0, 0), "h:mm a")} - {format(new Date().setHours(selectedLecture.endTime, 0, 0, 0), "h:mm a")}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium">Location:</span> {selectedLecture.location}
+                  </p>
+                </div>
+
+                {/* Attendance Toggle */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="attendance">Mark as Attended</Label>
+                  <Switch
+                    id="attendance"
+                    checked={selectedLecture.attended}
+                    onCheckedChange={handleAttendanceToggle}
+                  />
+                </div>
+
+                {/* File Upload */}
+                <div className="space-y-3">
+                  <Label>Lecture Notes</Label>
+                  {selectedLecture.hasNotes ? (
+                    <div className="flex items-center gap-2 p-3 bg-success/10 rounded-lg">
+                      <FileText className="h-4 w-4 text-success" />
+                      <span className="text-sm text-success">Notes uploaded</span>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleFileUpload}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Notes
+                    </Button>
+                  )}
+                </div>
+
+                {/* AI Summary */}
+                <div className="space-y-3">
+                  <Label>AI Summary</Label>
+                  {selectedLecture.hasSummary ? (
+                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                      <h4 className="font-medium mb-2">Lecture Summary</h4>
+                      <p className="text-sm text-muted-foreground">
+                        This lecture covered fundamental concepts in {selectedLecture.title.toLowerCase()}. 
+                        Key topics included theoretical foundations, practical applications, and problem-solving techniques. 
+                        Students were introduced to core methodologies and their real-world implementations.
+                      </p>
+                    </div>
+                  ) : selectedLecture.hasNotes ? (
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={generateSummary}
+                    >
+                      <Brain className="h-4 w-4 mr-2" />
+                      Generate AI Summary
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Upload notes first to generate summary
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
