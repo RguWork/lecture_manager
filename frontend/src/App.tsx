@@ -8,22 +8,12 @@ import Dashboard from "./pages/Dashboard";
 import WeeklySchedule from "./pages/WeeklySchedule";
 import ImportTimetable from "./pages/ImportTimetable";
 import NotFound from "./pages/NotFound";
-
-
-//ping test
-import { useEffect } from "react";
-import { ping } from "@/lib/ping";
-
-
-//------
+import ProtectedRoute from "@/routes/ProtectedRoute";
+import Login from "@/pages/Login";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-
-  useEffect(() => {
-    ping().then(console.log).catch(console.error);
-  }, []);
 
   return(
     <QueryClientProvider client={queryClient}>
@@ -31,14 +21,15 @@ const App = () => {
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/schedule" element={<WeeklySchedule />} />
-            <Route path="/import" element={<ImportTimetable />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<Layout />}>
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/schedule" element={<ProtectedRoute><WeeklySchedule /></ProtectedRoute>} />
+            <Route path="/import" element={<ProtectedRoute><ImportTimetable /></ProtectedRoute>} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

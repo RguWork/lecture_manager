@@ -2,6 +2,8 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Calendar, Home, Upload, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { logout } from "@/lib/auth";
+
 const navigationItems = [{
   title: "Dashboard",
   url: "/",
@@ -69,7 +71,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <div className="mt-auto p-4 border-t border-border">
-          <SidebarMenuButton className="w-full text-danger hover:bg-danger/10">
+          <SidebarMenuButton className="w-full text-danger hover:bg-danger/10" onClick={logout}>
             <LogOut className="mr-3 h-6 w-6" />
             {!isCollapsed && <span>Logout</span>}
           </SidebarMenuButton>
