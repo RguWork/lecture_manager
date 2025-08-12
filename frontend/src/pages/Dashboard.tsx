@@ -1,107 +1,108 @@
-import { useState } from "react";
+import { useMemo } from "react";
+import { formatISO, startOfWeek, endOfWeek } from "date-fns";
 import { CourseProgress } from "@/components/CourseProgress";
 import { LectureSection } from "@/components/LectureSection";
+import { useDashboard } from "@/hooks/use-dashboard";
+import type { LectureAPI } from "@/types/api";
 
-// Mock data
-const mockCourses = [
-  { id: "1", name: "Computer Science Fundamentals", code: "CS 601", attendedLectures: 15, totalLectures: 20, color: "hsl(217 91% 60%)" },
-  { id: "2", name: "Advanced Algorithms", code: "CS 705", attendedLectures: 8, totalLectures: 12, color: "hsl(159 84% 39%)" },
-  { id: "3", name: "Machine Learning", code: "CS 820", attendedLectures: 6, totalLectures: 15, color: "hsl(262 83% 70%)" },
-  { id: "4", name: "Database Systems", code: "CS 650", attendedLectures: 12, totalLectures: 14, color: "hsl(25 95% 65%)" },
-];
-
-const mockLectures = {
-  upcoming: [
-    {
-      id: "1",
-      title: "Introduction to Neural Networks",
-      course: "CS 820",
-      datetime: new Date("2024-01-15T14:00:00"),
-      location: "Room 205A",
-      status: "upcoming" as const,
-    },
-    {
-      id: "2",
-      title: "Advanced SQL Queries",
-      course: "CS 650",
-      datetime: new Date("2024-01-16T10:00:00"),
-      location: "Lab 301",
-      status: "upcoming" as const,
-    },
-  ],
-  missed: [
-    {
-      id: "3",
-      title: "Graph Algorithms",
-      course: "CS 705",
-      datetime: new Date("2024-01-10T11:00:00"),
-      location: "Room 150",
-      status: "missed" as const,
-    },
-  ],
-  needsNotes: [
-    {
-      id: "4",
-      title: "Object-Oriented Programming",
-      course: "CS 601",
-      datetime: new Date("2024-01-08T13:00:00"),
-      location: "Room 120",
-      status: "needs-notes" as const,
-    },
-    {
-      id: "5",
-      title: "Data Structures Review",
-      course: "CS 601",
-      datetime: new Date("2024-01-09T09:00:00"),
-      location: "Room 120",
-      status: "needs-notes" as const,
-    },
-  ],
+type UILecture = {
+  id: string;
+  title: string;
+  course: string;
+  datetime: Date;
+  location: string;
+  status: "upcoming" | "missed" | "attended" | "summarized" | "needs-notes";
 };
 
 export default function Dashboard() {
-  const [selectedLecture, setSelectedLecture] = useState(null);
+  const { data, isLoading, isError } = useDashboard();
 
-  const handleViewDetails = (lecture: any) => {
-    setSelectedLecture(lecture);
-    console.log("View details for:", lecture);
-  };
+  const sections = useMemo(() => {
+    const upcoming: UILecture[] = [];
+    const missed: UILecture[] = [];
+    const needsNotes: UILecture[] = []; //derived: backend 'attended' = attended but no summary
+    if (!data) return { upcoming, missed, needsNotes };
+
+    const allLectures: LectureAPI[] = data.courses.flatMap(c => c.lectures);
+    for (const l of allLectures) {
+      const ui: UILecture = {
+        id: l.id,
+        title: "Lecture", //backend has no 'title'; keep simple
+        course: l.course_name,
+        datetime: new Date(l.start_dt),
+        location: l.location,
+        status:
+          l.status === "attended" ? "needs-notes" : //map 'attended' -> 'needs-notes' for UI
+          (l.status as UILecture["status"]),
+      };
+      if (ui.status === "upcoming") upcoming.push(ui);
+      else if (ui.status === "missed") missed.push(ui);
+      else if (ui.status === "needs-notes") needsNotes.push(ui);
+      //'summarized' will show under "Needs Notes", tbd if we add a section for summaries if desired
+    }
+
+    //Basic sort: nearest first
+    const byTime = (a: UILecture, b: UILecture) => a.datetime.getTime() - b.datetime.getTime();
+    upcoming.sort(byTime); missed.sort(byTime); needsNotes.sort(byTime);
+    return { upcoming, missed, needsNotes };
+  }, [data]);
+
+  const courseProgress = useMemo(() => {
+    if (!data) return [];
+    return data.courses.map(c => {
+      const total = c.lectures.length;
+      const attendedCount = c.lectures.filter(l => l.status === "attended" || l.status === "summarized").length;
+      return {
+        id: c.id,
+        name: c.name,
+        code: c.name, //reuse name for now
+        attendedLectures: attendedCount,
+        totalLectures: total,
+        color: c.color_hex,
+      };
+    });
+  }, [data]);
+
+  if (isLoading) {
+    return <div className="space-y-8">
+      <div className="h-24 rounded-lg bg-muted animate-pulse" />
+      <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="h-64 rounded-lg bg-muted animate-pulse" />
+        <div className="h-64 rounded-lg bg-muted animate-pulse" />
+        <div className="h-64 rounded-lg bg-muted animate-pulse" />
+      </div>
+    </div>;
+  }
+
+  if (isError || !data) {
+    return <div className="text-sm text-destructive">Failed to load dashboard.</div>;
+  }
 
   return (
     <div className="space-y-8">
       {/* Course Progress Section */}
-      <div className="animate-fade-in" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
-        <CourseProgress courses={mockCourses} />
-      </div>
+      <CourseProgress courses={courseProgress} />
 
       {/* Lecture Sections */}
       <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <div className="animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-          <LectureSection
-            title="Upcoming Lectures"
-            lectures={mockLectures.upcoming}
-            onViewDetails={handleViewDetails}
-            emptyMessage="No upcoming lectures"
-          />
-        </div>
-        
-        <div className="animate-fade-in" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>
-          <LectureSection
-            title="Missed Lectures"
-            lectures={mockLectures.missed}
-            onViewDetails={handleViewDetails}
-            emptyMessage="No missed lectures"
-          />
-        </div>
-        
-        <div className="animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
-          <LectureSection
-            title="Needs Notes Upload"
-            lectures={mockLectures.needsNotes}
-            onViewDetails={handleViewDetails}
-            emptyMessage="All lectures have notes"
-          />
-        </div>
+        <LectureSection
+          title="Upcoming Lectures"
+          lectures={sections.upcoming}
+          onViewDetails={(lec) => console.log("view", lec)}
+          emptyMessage="No upcoming lectures"
+        />
+        <LectureSection
+          title="Missed Lectures"
+          lectures={sections.missed}
+          onViewDetails={(lec) => console.log("view", lec)}
+          emptyMessage="No missed lectures"
+        />
+        <LectureSection
+          title="Needs Notes Upload"
+          lectures={sections.needsNotes}
+          onViewDetails={(lec) => console.log("view", lec)}
+          emptyMessage="All caught up 🎉"
+        />
       </div>
     </div>
   );

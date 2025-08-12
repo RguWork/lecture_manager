@@ -42,7 +42,7 @@ class LectureSerializer(serializers.ModelSerializer):
         attendance = obj.attendances.filter(user = user).first()
         
         #missed/attended
-        if attendance:
+        if attendance.attended:
             #summarized
             if attendance.summary:
                 return "summarized"
