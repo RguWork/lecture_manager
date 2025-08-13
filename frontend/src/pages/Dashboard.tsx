@@ -17,6 +17,7 @@ type UILecture = {
 export default function Dashboard() {
   const { data, isLoading, isError } = useDashboard();
 
+  //Load sections based on user's lecture objects
   const sections = useMemo(() => {
     const upcoming: UILecture[] = [];
     const missed: UILecture[] = [];
@@ -47,6 +48,7 @@ export default function Dashboard() {
     return { upcoming, missed, needsNotes };
   }, [data]);
 
+  //Load course progress
   const courseProgress = useMemo(() => {
     if (!data) return [];
     return data.courses.map(c => {
