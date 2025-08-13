@@ -8,6 +8,6 @@ export type ImportedLecture = {
 };
 
 export async function importTimetable(lectures: ImportedLecture[]) {
-  const { data } = await api.post("/schedule/import/", { lectures });
-  return data;
+  const { data } = await api.post("/schedule/import/", lectures);
+  return data; 
 }
