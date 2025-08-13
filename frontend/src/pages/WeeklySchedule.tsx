@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +45,19 @@ type GridLecture = {
 export default function WeeklySchedule() {
   const [selectedLecture, setSelectedLecture] = useState<GridLecture | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [currentWeek, setCurrentWeek] = useState(new Date());
+
+  const [search, setSearch] = useSearchParams();
+  const weekParam = search.get("week"); //"YYYY-MM-DD"
+  const focusId = search.get("focus"); //lecture id to highlight
+
+  function localDate(yyyyMmDd: string) {
+    const [y, m, d] = yyyyMmDd.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  const [currentWeek, setCurrentWeek] = useState<Date>(
+    weekParam ? localDate(weekParam) : new Date()
+  );
 
   //Week bounds (+-6 months)
   const minWeek = subMonths(new Date(), 6);
@@ -83,6 +96,20 @@ export default function WeeklySchedule() {
     });
   }, [lectures]);
 
+  //After lectures load, scroll and flash the target lecture
+  useEffect(() => {
+    if (!focusId) return;
+    const el = document.getElementById(`lec-${focusId}`);
+    if (el) {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      el.classList.add("ring-2", "ring-primary", "animate-pulse");
+      const t = setTimeout(() => {
+        el.classList.remove("ring-2", "ring-primary", "animate-pulse");
+      }, 1600);
+      return () => clearTimeout(t);
+    }
+  }, [focusId, lectures]);
+
   const handleLectureClick = (lecture: GridLecture) => {
     setSelectedLecture(lecture);
     setIsDrawerOpen(true);
@@ -107,11 +134,18 @@ export default function WeeklySchedule() {
     }
   };
 
+  const setWeekParam = (d: Date) => {
+    const next = new URLSearchParams(search);
+    next.set("week", format(d, "yyyy-MM-dd"));
+    setSearch(next, { replace: true });
+  };
+
   const navigateWeek = (direction: "prev" | "next") => {
     const newWeek = direction === "prev" ? subWeeks(currentWeek, 1) : addWeeks(currentWeek, 1);
     if (direction === "prev" && isBefore(startOfWeek(newWeek), startOfWeek(minWeek))) return;
     if (direction === "next" && isAfter(startOfWeek(newWeek), startOfWeek(maxWeek))) return;
     setCurrentWeek(newWeek);
+    setWeekParam(newWeek); //keep URL in sync
   };
 
   const getLectureForSlot = (day: number, hour: number) => {
@@ -169,6 +203,8 @@ export default function WeeklySchedule() {
                   {/* Day columns */}
                   {weekDays.map((_, dayIndex) => {
                     const lecture = getLectureForSlot(dayIndex, hour);
+                    const isStart = !!lecture && hour === lecture.startTime;
+                    const anchorId = isStart ? `lec-${lecture!.id}` : undefined;
                     return (
                       <div
                         key={`${dayIndex}-${hour}`}
@@ -177,6 +213,7 @@ export default function WeeklySchedule() {
                       >
                         {lecture && hour === lecture.startTime && (
                           <Card
+                            id = {anchorId}
                             className="absolute inset-x-1 -left-1 cursor-pointer hover:shadow-md transition-all z-10 bg-primary/5 border-primary/20"
                             style={{ height: lecture.endTime - lecture.startTime > 0 ? (lecture.endTime - lecture.startTime) * HOUR_PX - 8 : HOUR_PX - 8 }}
                             onClick={() => handleLectureClick(lecture)}

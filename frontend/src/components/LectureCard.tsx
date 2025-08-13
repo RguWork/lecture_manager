@@ -32,7 +32,7 @@ export function LectureCard({ lecture, onViewDetails }: LectureCardProps) {
   const status = statusConfig[lecture.status];
   
   return (
-    <Card className="p-4 hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+    <Card className="p-4 hover:shadow-md transition-all duration-200 hover:scale-[1.02]" onClick={() => onViewDetails?.(lecture)}>
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">

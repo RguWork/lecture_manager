@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { formatISO, startOfWeek, endOfWeek } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { formatISO, startOfWeek, endOfWeek, format } from "date-fns";
 import { CourseProgress } from "@/components/CourseProgress";
 import { LectureSection } from "@/components/LectureSection";
 import { useDashboard } from "@/hooks/use-dashboard";
@@ -15,6 +16,7 @@ type UILecture = {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { data, isLoading, isError } = useDashboard();
 
   //Load sections based on user's lecture objects
@@ -65,6 +67,12 @@ export default function Dashboard() {
     });
   }, [data]);
 
+  //Redirects for lecture component
+  const goToSchedule = (lec: { id: string; datetime: Date }) =>{
+    const week = format(startOfWeek(lec.datetime), "yyyy-MM-dd");
+    navigate(`/schedule?week=${week}&focus=${lec.id}`);
+  }
+
   if (isLoading) {
     return <div className="space-y-8">
       <div className="h-24 rounded-lg bg-muted animate-pulse" />
@@ -90,19 +98,19 @@ export default function Dashboard() {
         <LectureSection
           title="Upcoming Lectures"
           lectures={sections.upcoming}
-          onViewDetails={(lec) => console.log("view", lec)}
+          onViewDetails={goToSchedule}
           emptyMessage="No upcoming lectures"
         />
         <LectureSection
           title="Missed Lectures"
           lectures={sections.missed}
-          onViewDetails={(lec) => console.log("view", lec)}
+          onViewDetails={goToSchedule}
           emptyMessage="No missed lectures"
         />
         <LectureSection
           title="Needs Notes Upload"
           lectures={sections.needsNotes}
-          onViewDetails={(lec) => console.log("view", lec)}
+          onViewDetails={goToSchedule}
           emptyMessage="All caught up 🎉"
         />
       </div>
