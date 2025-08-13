@@ -90,11 +90,19 @@ class ImportTimetable(APIView):
                     start_dt = datetime.datetime.combine(day_cursor, slot["start_time"], tzinfo=utc)
                     end_dt = datetime.datetime.combine(day_cursor, slot["end_time"], tzinfo=utc)
 
-                    _, made = Lecture.objects.get_or_create(
-                        course = course,
-                        start_dt = start_dt,
+                    lecture, made = Lecture.objects.get_or_create(
+                        course=course,
+                        start_dt=start_dt,
                         defaults={"end_dt": end_dt, "location": slot["location"]}
                     )
+                    
+
+                    Attendance.objects.get_or_create(
+                        user=request.user,
+                        lecture=lecture,
+                        defaults={"attended": False}
+                    )
+
                     if made:
                         created += 1
 
