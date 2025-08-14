@@ -185,10 +185,26 @@ class DashboardView(APIView):
         serializer = CourseDashboardSerializer(courses, many=True, context = {"request":request})
         return Response({"courses": serializer.data})
 
-class Ping(APIView):
-    '''
-    just to test backend connection
-    '''
-    permission_classes = [AllowAny]
-    def get(self, request):
-        return Response({"ok": True})
+class LectureAttendanceToggle(APIView):
+    """
+    POST endpoint for updating a lecture's corresponding attendance object
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        #bug checks, shouldnt happen
+        try:
+            lecture = Lecture.objects.filter(course__user=request.user).get(pk=pk)
+        except Lecture.DoesNotExist:
+            return Response({"detail": "Not found."}, status=404)
+
+        attended = request.data.get("attended", None)
+        if not isinstance(attended, bool):
+            return Response({"detail": "'attended' must be boolean true/false."},
+                            status=404)
+        
+        att, _ = Attendance.objects.get_or_create(user=request.user, lecture=lecture, defaults={"attended": False})
+        att.attended = attended
+        att.save(update_fields=["attended", "updated_at"])
+        return Response(AttendanceSerializer(att).data, status=200)
+
