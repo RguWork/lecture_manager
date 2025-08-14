@@ -22,6 +22,7 @@ import {
 } from "date-fns";
 import SmartBadge from "@/components/SmartBadge";
 import { useLectures } from "@/hooks/use-lectures";
+import { useToggleAttendance } from "@/hooks/use-attendance";
 import type { LectureAPI } from "@/types/api";
 
 const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -49,6 +50,8 @@ export default function WeeklySchedule() {
   const [search, setSearch] = useSearchParams();
   const weekParam = search.get("week"); //"YYYY-MM-DD"
   const focusId = search.get("focus"); //lecture id to highlight
+
+  const toggleAttendance = useToggleAttendance();
 
   function localDate(yyyyMmDd: string) {
     const [y, m, d] = yyyyMmDd.split("-").map(Number);
@@ -116,10 +119,11 @@ export default function WeeklySchedule() {
   };
 
   const handleAttendanceToggle = (checked: boolean) => {
-    if (selectedLecture) {
-      //optimistic local toggle (persistence will be wired in the next sprint)
-      setSelectedLecture({ ...selectedLecture, attended: checked });
-    }
+    if (!selectedLecture) return;
+    //local feel
+    setSelectedLecture({ ...selectedLecture, attended: checked });
+    //persist
+    toggleAttendance.mutate({ lectureId: String(selectedLecture.id), attended: checked });
   };
 
   const handleFileUpload = () => {
