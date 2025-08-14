@@ -39,13 +39,11 @@ class LectureSerializer(serializers.ModelSerializer):
             #a lecture it will still show upcoming
             return "upcoming"
         
-        attendance = obj.attendances.filter(user = user).first() #should never be null
+        attendance = obj.attendances.filter(user = user).first()
         
-        #missed/attended
-        if attendance.attended:
-            #summarized
-            if attendance.summary:
-                return "summarized"
+        if attendance and attendance.summary:
+            return "summarized"
+        if attendance and attendance.attended:
             return "attended"
         return "missed"
 
