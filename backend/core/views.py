@@ -118,6 +118,10 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Attendance.objects.filter(user = self.request.user)
 
+        lecture_id = self.request.query_params.get("lecture_id")
+        if lecture_id:
+            queryset = queryset.filter(lecture__id=lecture_id)
+
         #optional filter param
         course_name = self.request.query_params.get("course_name")
 
