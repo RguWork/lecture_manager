@@ -83,6 +83,10 @@ export default function WeeklySchedule() {
   //Live data
   const { data: lectures } = useLectures(from, to);
 
+  //helper to check if a date is in the future
+  const isFuture = (d: Date) => d.getTime() > Date.now();
+
+
   //Map API -> grid-friendly items (keep UI shape the same as your previous mock)
   const gridLectures = useMemo<GridLecture[]>(() => {
     if (!lectures) return [];
@@ -99,8 +103,8 @@ export default function WeeklySchedule() {
         startTime: startHour,
         endTime: endHour,
         location: l.location,
-        attended: l.status === "attended" || l.status === "summarized",
-        hasNotes: false, //TODO: wire soon
+        attended: Boolean(l.attended),
+        hasNotes: Boolean((l as any).has_notes), //TODO: wire soon
         hasSummary: l.status === "summarized",
         rawStart: start,
       };
@@ -259,6 +263,15 @@ export default function WeeklySchedule() {
                           >
                             <div className="p-2 space-y-1 min-w-[90px]">
                               <div className="font-medium text-sm text-primary">{lecture.course}</div>
+                              {lecture.attended && isFuture(lecture.rawStart) && (
+                                <span
+                                  className="absolute left-20 top-1.5 text-red-600 text-lg leading-none select-none"
+                                  title="This lecture has not occurred yet"
+                                  aria-label="This lecture has not occurred yet"
+                                >
+                                  *
+                                </span>
+                              )}
                               <div className="text-xs text-muted-foreground truncate">{lecture.title}</div>
                               <div className="text-xs text-muted-foreground">{lecture.location}</div>
                               <div className="flex flex-wrap gap-1">
@@ -304,6 +317,12 @@ export default function WeeklySchedule() {
             <>
               <SheetHeader>
                 <SheetTitle className="text-left">
+                  {selectedLecture?.attended && isFuture(selectedLecture.rawStart) && (
+                    <p className="mt-1 text-xs text-red-600">
+                      <span aria-hidden className="mr-1">*</span>
+                      This lecture has not occurred yet
+                    </p>
+                  )}
                   {selectedLecture.course}: {selectedLecture.title}
                 </SheetTitle>
               </SheetHeader>

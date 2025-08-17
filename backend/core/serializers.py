@@ -30,14 +30,15 @@ class LectureSerializer(serializers.ModelSerializer):
         return record.attended if record else None
 
     def get_status(self, obj):
+        """
+        Precedence:
+        1) summarized (if notes summarized)
+        2) attended (even if future)
+        3) upcoming (start_dt > now)
+        4) missed (past & not attended)
+        """
         user = self.context["request"].user
         now = timezone.now()
-
-        #upcoming
-        if obj.start_dt > now:
-            #note: this doesnt care if you attended. if you "preemptively" attended
-            #a lecture it will still show upcoming
-            return "upcoming"
         
         attendance = obj.attendances.filter(user = user).first()
         
@@ -45,6 +46,8 @@ class LectureSerializer(serializers.ModelSerializer):
             return "summarized"
         if attendance and attendance.attended:
             return "attended"
+        if obj.start_dt > now:
+            return "upcoming"
         return "missed"
 
 class SlotSerializer(serializers.Serializer):
