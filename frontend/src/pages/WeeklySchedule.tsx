@@ -23,7 +23,9 @@ import {
 import SmartBadge from "@/components/SmartBadge";
 import { useLectures } from "@/hooks/use-lectures";
 import { useToggleAttendance } from "@/hooks/use-attendance";
+import { useUploadNote } from "@/hooks/use-upload-note";
 import type { LectureAPI } from "@/types/api";
+
 
 const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const timeSlots = Array.from({ length: 12 }, (_, i) => i + 8); //8 AM to 7 PM
@@ -52,6 +54,7 @@ export default function WeeklySchedule() {
   const focusId = search.get("focus"); //lecture id to highlight
 
   const toggleAttendance = useToggleAttendance();
+  const uploadNote = useUploadNote();
 
   function localDate(yyyyMmDd: string) {
     const [y, m, d] = yyyyMmDd.split("-").map(Number);
@@ -154,6 +157,15 @@ export default function WeeklySchedule() {
 
   const getLectureForSlot = (day: number, hour: number) => {
     return gridLectures.find((lecture) => lecture.day === day && hour >= lecture.startTime && hour < lecture.endTime);
+  };
+
+  const onSelectNote = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedLecture) return;
+    uploadNote.mutate({ lectureId: String(selectedLecture.id), file });
+    //quick local feel; true persistence will show after refetch
+    setSelectedLecture({ ...selectedLecture, hasNotes: true });
+    e.currentTarget.value = ""; //reset input so same file can be chosen again if needed
   };
 
   const canNavigatePrev = !isBefore(startOfWeek(subWeeks(currentWeek, 1)), startOfWeek(minWeek));
@@ -292,7 +304,7 @@ export default function WeeklySchedule() {
                 </div>
 
                 {/* File Upload */}
-                <div className="space-y-3">
+                {/* <div className="space-y-3">
                   <Label>Lecture Notes</Label>
                   {selectedLecture.hasNotes ? (
                     <div className="flex items-center gap-2 p-3 bg-success/10 rounded-lg">
@@ -303,6 +315,33 @@ export default function WeeklySchedule() {
                     <Button variant="outline" className="w-full" onClick={handleFileUpload}>
                       <Upload className="h-4 w-4 mr-2" />
                       Upload Notes
+                    </Button>
+                  )}
+                </div> */}
+                <div className="space-y-3">
+                  <Label>Lecture Notes</Label>
+
+                  {/* hidden file input */}
+                  <input
+                    id="note-file"
+                    type="file"
+                    accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg"
+                    className="hidden"
+                    onChange={onSelectNote}
+                  />
+
+                  {selectedLecture?.hasNotes ? (
+                    <div className="flex items-center gap-2 p-3 bg-success/10 rounded-lg">
+                      <FileText className="h-4 w-4 text-success" />
+                      <span className="text-sm text-success">Notes uploaded</span>
+                    </div>
+                  ) : (
+                    <Button asChild variant="outline" className="w-full" disabled={uploadNote.isPending}>
+                      {/* clicking this label opens the hidden input */}
+                      <label htmlFor="note-file" className="cursor-pointer flex items-center justify-center">
+                        <Upload className="h-4 w-4 mr-2" />
+                        {uploadNote.isPending ? "Uploading..." : "Upload Notes"}
+                      </label>
                     </Button>
                   )}
                 </div>
