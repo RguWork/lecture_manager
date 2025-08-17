@@ -24,6 +24,7 @@ import SmartBadge from "@/components/SmartBadge";
 import { useLectures } from "@/hooks/use-lectures";
 import { useToggleAttendance } from "@/hooks/use-attendance";
 import { useUploadNote } from "@/hooks/use-upload-note";
+import { useSummarizeAttendance } from "@/hooks/use-summarize";
 import type { LectureAPI } from "@/types/api";
 
 
@@ -55,6 +56,10 @@ export default function WeeklySchedule() {
 
   const toggleAttendance = useToggleAttendance();
   const uploadNote = useUploadNote();
+
+  const summarizeNotes = useSummarizeAttendance();
+  const [summaryText, setSummaryText] = useState<string | null>(null);
+  const [summaryErr, setSummaryErr] = useState<string | null>(null);
 
   function localDate(yyyyMmDd: string) {
     const [y, m, d] = yyyyMmDd.split("-").map(Number);
@@ -166,6 +171,24 @@ export default function WeeklySchedule() {
     //quick local feel; true persistence will show after refetch
     setSelectedLecture({ ...selectedLecture, hasNotes: true });
     e.currentTarget.value = ""; //reset input so same file can be chosen again if needed
+  };
+
+  const handleGenerateOrViewSummary = () => {
+    if (!selectedLecture) return;
+    setSummaryErr(null);
+    summarizeNotes.mutate(
+      { lectureId: String(selectedLecture.id) },
+      {
+        onSuccess: (res) => {
+          setSummaryText(res.summary);
+          setSelectedLecture((prev) => (prev ? { ...prev, hasSummary: true } : prev));
+        },
+        onError: (err: any) => {
+          const msg = err?.response?.data?.error || "Unable to generate summary.";
+          setSummaryErr(msg);
+        },
+      }
+    );
   };
 
   const canNavigatePrev = !isBefore(startOfWeek(subWeeks(currentWeek, 1)), startOfWeek(minWeek));
@@ -304,20 +327,6 @@ export default function WeeklySchedule() {
                 </div>
 
                 {/* File Upload */}
-                {/* <div className="space-y-3">
-                  <Label>Lecture Notes</Label>
-                  {selectedLecture.hasNotes ? (
-                    <div className="flex items-center gap-2 p-3 bg-success/10 rounded-lg">
-                      <FileText className="h-4 w-4 text-success" />
-                      <span className="text-sm text-success">Notes uploaded</span>
-                    </div>
-                  ) : (
-                    <Button variant="outline" className="w-full" onClick={handleFileUpload}>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Notes
-                    </Button>
-                  )}
-                </div> */}
                 <div className="space-y-3">
                   <Label>Lecture Notes</Label>
 
@@ -325,7 +334,7 @@ export default function WeeklySchedule() {
                   <input
                     id="note-file"
                     type="file"
-                    accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg"
+                    accept=".pdf,.txt,.doc,.docx"
                     className="hidden"
                     onChange={onSelectNote}
                   />
@@ -349,23 +358,34 @@ export default function WeeklySchedule() {
                 {/* AI Summary */}
                 <div className="space-y-3">
                   <Label>AI Summary</Label>
-                  {selectedLecture.hasSummary ? (
-                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  {summaryText ? (
+                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20 max-h-56 overflow-auto">
                       <h4 className="font-medium mb-2">Lecture Summary</h4>
-                      <p className="text-sm text-muted-foreground">
-                        This lecture covered fundamental concepts in {selectedLecture.title.toLowerCase()}. Key topics included theoretical
-                        foundations, practical applications, and problem-solving techniques. Students were introduced to core methodologies
-                        and their real-world implementations.
-                      </p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{summaryText}</p>
                     </div>
-                  ) : selectedLecture.hasNotes ? (
-                    <Button variant="default" className="w-full" onClick={generateSummary}>
-                      <Brain className="h-4 w-4 mr-2" />
-                      Generate AI Summary
+                  ) : selectedLecture?.hasSummary ? (
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={handleGenerateOrViewSummary}
+                      disabled={summarizeNotes.isPending}
+                    >
+                      {summarizeNotes.isPending ? "Loading..." : "View Summary"}
+                    </Button>
+                  ) : selectedLecture?.hasNotes ? (
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={handleGenerateOrViewSummary}
+                      disabled={summarizeNotes.isPending}
+                    >
+                      {summarizeNotes.isPending ? "Summarizing..." : "Generate AI Summary"}
                     </Button>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">Upload notes first to generate summary</p>
                   )}
+
+                  {summaryErr && <p className="text-sm text-destructive">{summaryErr}</p>}
                 </div>
               </div>
             </>
