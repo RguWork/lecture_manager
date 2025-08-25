@@ -24,7 +24,9 @@ def extract_text_from_file(file):
         return file.read().decode("utf-8")
     elif ext == ".docx":
         doc = Document(file)
-        return "\n".join(p.text for p in doc.paragraphs)
+        dummy = "\n".join(p.text for p in doc.paragraphs)
+        print(dummy)
+        return dummy
     elif ext == ".pdf":
         reader = PdfReader(file)
         return "\n".join(page.extract_text() for page in reader.pages)

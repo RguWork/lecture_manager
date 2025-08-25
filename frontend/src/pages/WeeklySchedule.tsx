@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Upload, FileText, Brain, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   format,
@@ -19,6 +18,8 @@ import {
   addMonths,
   subMonths,
   getDay,
+  addDays,
+  isSameDay,
 } from "date-fns";
 import SmartBadge from "@/components/SmartBadge";
 import { useLectures } from "@/hooks/use-lectures";
@@ -47,6 +48,8 @@ type GridLecture = {
 };
 
 export default function WeeklySchedule() {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [selectedLecture, setSelectedLecture] = useState<GridLecture | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -70,7 +73,7 @@ export default function WeeklySchedule() {
     weekParam ? localDate(weekParam) : new Date()
   );
 
-  //Week bounds (+-6 months)
+  //week bounds (+-6 months)
   const minWeek = subMonths(new Date(), 6);
   const maxWeek = addMonths(new Date(), 6);
 
@@ -80,7 +83,7 @@ export default function WeeklySchedule() {
   const from = format(weekStart, "yyyy-MM-dd");
   const to = format(weekEnd, "yyyy-MM-dd");
 
-  //Live data
+  //live data
   const { data: lectures } = useLectures(from, to);
 
   //helper to check if a date is in the future
@@ -111,7 +114,7 @@ export default function WeeklySchedule() {
     });
   }, [lectures]);
 
-  //After lectures load, scroll and flash the target lecture
+  //after lectures load, scroll and flash the target lecture
   useEffect(() => {
     if (!focusId) return;
     const el = document.getElementById(`lec-${focusId}`);
@@ -138,17 +141,6 @@ export default function WeeklySchedule() {
     toggleAttendance.mutate({ lectureId: String(selectedLecture.id), attended: checked });
   };
 
-  const handleFileUpload = () => {
-    if (selectedLecture) {
-      setSelectedLecture({ ...selectedLecture, hasNotes: true });
-    }
-  };
-
-  const generateSummary = () => {
-    if (selectedLecture) {
-      setSelectedLecture({ ...selectedLecture, hasSummary: true });
-    }
-  };
 
   const setWeekParam = (d: Date) => {
     const next = new URLSearchParams(search);
@@ -241,11 +233,26 @@ export default function WeeklySchedule() {
             <div className="grid grid-cols-8 gap-2 min-w-[800px]">
               {/* Header Row */}
               <div className="font-medium text-center text-muted-foreground py-2">Time</div>
-              {weekDays.map((day) => (
-                <div key={day} className="font-medium text-center text-foreground py-2 border-b border-border">
-                  {day}
-                </div>
-              ))}
+              {weekDays.map((day, idx) => {
+                const dateObj = addDays(weekStart, idx);
+                const dateLabel = format(addDays(weekStart, idx), "M/d");
+                const isTodayCol = isSameDay(dateObj, new Date());
+
+                return (
+                  <div
+                    key={`${day}-${idx}`}
+                    className="font-medium text-center text-foreground py-2 border-b border-border"
+                  >
+                    {day} <span className="text-xs text-muted-foreground">({dateLabel})</span>
+                    {isTodayCol && (
+                      <span className="ml-2 align-middle rounded-full bg-blue-500/80 text-white text-[10px] px-1.5 py-0.5">
+                        Today
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              
 
               {/* Time Slots */}
               {timeSlots.map((hour) => (
@@ -262,6 +269,9 @@ export default function WeeklySchedule() {
                     const lecture = getLectureForSlot(dayIndex, hour);
                     const isStart = !!lecture && hour === lecture.startTime;
                     const anchorId = isStart ? `lec-${lecture!.id}` : undefined;
+
+                    const dateObj = addDays(weekStart, dayIndex);
+                    const isTodayCol = isSameDay(dateObj, new Date());
                     return (
                       <div
                         key={`${dayIndex}-${hour}`}
@@ -363,30 +373,66 @@ export default function WeeklySchedule() {
                 <div className="space-y-3">
                   <Label>Lecture Notes</Label>
 
-                  {/* hidden file input */}
-                  <input
-                    id="note-file"
-                    type="file"
-                    accept=".pdf,.txt,.docx"
-                    className="hidden"
-                    onChange={onSelectNote}
-                  />
-
                   {selectedLecture?.hasNotes ? (
-                    <div className="flex items-center gap-2 p-3 bg-success/10 rounded-lg">
-                      <FileText className="h-4 w-4 text-success" />
-                      <span className="text-sm text-success">Notes uploaded</span>
+                    <div className="flex items-center justify-between gap-2 p-3 bg-success/10 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-success" />
+                        <span className="text-sm text-success">Notes uploaded</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="text-xs underline text-primary hover:opacity-80"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Reupload?
+                      </button>
                     </div>
                   ) : (
-                    <Button asChild variant="outline" className="w-full" disabled={uploadNote.isPending}>
-                      {/* clicking this label opens the hidden input */}
-                      <label htmlFor="note-file" className="cursor-pointer flex items-center justify-center">
-                        <Upload className="h-4 w-4 mr-2" />
-                        {uploadNote.isPending ? "Uploading..." : "Upload Notes"}
-                      </label>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Notes (.txt, .docx, .pdf)
                     </Button>
                   )}
+
+                  <input
+                    ref={fileInputRef}
+                    id="note-file"
+                    type="file"
+                    accept=".txt,.docx,.pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !selectedLecture) return;
+
+                      uploadNote.mutate(
+                        { lectureId: String(selectedLecture.id), file },
+                        {
+                          onSuccess: () => {
+                            //mark the current lecture as having notes
+                            setSelectedLecture((prev) =>
+                              prev ? { ...prev, hasNotes: true, hasSummary: false } : prev
+                            );
+                            //clear any cached summary for THIS lecture so user can regenerate
+                            const id = String(selectedLecture.id);
+                            setSummaryByLecture((m) => {
+                              const { [id]: _drop, ...rest } = m;
+                              return rest;
+                            });
+                          },
+                        }
+                      );
+
+                      //reset input so choosing the same file again will still trigger onChange later
+                      e.currentTarget.value = "";
+                    }}
+                  />
                 </div>
+                
 
                 {/* AI Summary */}
                 <div className="space-y-3">

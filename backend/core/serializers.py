@@ -87,6 +87,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
         #lecture saves the uuid of the lecture this attendance object corresponds to
         fields = ['id', 'lecture', 'course_name', 'lecture_start_dt', 'attended', 'note_upload', 'created_at', 'updated_at', 'summary']
         read_only_fields = ['created_at', 'updated_at']
+        
 
 class CourseDashboardSerializer(serializers.ModelSerializer):
     #define the course model for dashboard display, which now
