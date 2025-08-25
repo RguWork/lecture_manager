@@ -1,20 +1,20 @@
 from django.shortcuts import render
+from django.contrib.auth.models import User
+
 
 # Create your views here.
-from rest_framework import viewsets, permissions
+from rest_framework import generics, viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 
-
 from django.utils import timezone
 import datetime
 import zoneinfo
 
-
 from .models import Course, Lecture, Attendance
-from .serializers import CourseSerializer, LectureSerializer, SlotSerializer, AttendanceSerializer, CourseDashboardSerializer, WEEKDAYS
+from .serializers import CourseSerializer, LectureSerializer, SlotSerializer, AttendanceSerializer, CourseDashboardSerializer, RegistrationSerializer, WEEKDAYS
 
 from core.utils.summarization import summarize_text, extract_text_from_file
 
@@ -214,3 +214,10 @@ class LectureAttendanceToggle(APIView):
         att.save(update_fields=["attended", "updated_at"])
         return Response(AttendanceSerializer(att).data, status=200)
 
+class RegisterView(generics.CreateAPIView):
+    """
+    POST endpoint for user registration
+    """
+    queryset = User.objects.all()
+    permission_classes = [permissions.AllowAny]
+    serializer_class = RegistrationSerializer

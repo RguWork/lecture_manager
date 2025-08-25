@@ -10,6 +10,7 @@ import ImportTimetable from "./pages/ImportTimetable";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route element={<Layout />}>
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/schedule" element={<ProtectedRoute><WeeklySchedule /></ProtectedRoute>} />

@@ -15,3 +15,8 @@ export function logout() {
 export function isLoggedIn() {
   return !!localStorage.getItem("access");
 }
+
+export async function registerAndLogin(username: string, email: string, password: string, password2: string) {
+  await api.post("/register/", { username, email, password, password2 });
+  await login(username, password);
+}

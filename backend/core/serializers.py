@@ -1,4 +1,9 @@
 import os
+
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Course, Lecture, Attendance
@@ -135,3 +140,34 @@ class CourseDashboardSerializer(serializers.ModelSerializer):
         attended = lectures.filter(attendances__attended = True, attendances__user = user)
 
         return (attended.count()/total_lecs) * 100
+    
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    password2 = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password", "password2"]
+
+    def validate_email(self, value):
+        if not value:
+            raise serializers.ValidationError("Email is required.")
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Email is already in use.")
+        return value
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password2"]:
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
+        try:
+            validate_password(attrs["password"])
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
+        return attrs
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        validated_data.pop("password2", None)
+        user = User.objects.create_user(password=password, **validated_data)
+        return user
