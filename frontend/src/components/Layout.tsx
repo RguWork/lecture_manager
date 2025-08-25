@@ -13,10 +13,10 @@ export function Layout() {
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6">
+          <header className="h-20 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="lg:hidden" />
-              <h1 className="text-2xl font-bold text-primary">LectureManager</h1>
+              <img src="Sumori.png" alt="Sumori Logo" className="h-16 w-auto"/>
             </div>
             <Button variant="ghost" size="sm" className="text-danger hover:bg-danger/10" onClick={logout}>
               <LogOut className="h-4 w-4 mr-2"/>

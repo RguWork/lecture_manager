@@ -28,7 +28,7 @@ export function CourseProgress({ courses }: CourseProgressProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium text-foreground">{course.code}</h3>
-                    <p className="text-sm text-muted-foreground">{course.name}</p>
+                    <p className="text-sm text-muted-foreground">Lecture</p>
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-semibold text-primary">{percentage}%</span>

@@ -44,6 +44,7 @@ type GridLecture = {
   attended: boolean;
   hasNotes: boolean;  //placeholder until S3 wiring
   hasSummary: boolean;
+  noteFilename: string | null;
   rawStart: Date;
 };
 
@@ -109,6 +110,7 @@ export default function WeeklySchedule() {
         attended: Boolean(l.attended),
         hasNotes: Boolean((l as any).has_notes),
         hasSummary: l.status === "summarized",
+        noteFilename: (l as any).note_filename ?? null,
         rawStart: start,
       };
     });
@@ -377,7 +379,9 @@ export default function WeeklySchedule() {
                     <div className="flex items-center justify-between gap-2 p-3 bg-success/10 rounded-lg">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-success" />
-                        <span className="text-sm text-success">Notes uploaded</span>
+                        <span className="text-sm text-success">
+                          Notes uploaded{selectedLecture.noteFilename ? `: ${selectedLecture.noteFilename}` : ""}
+                        </span>
                       </div>
 
                       <button
@@ -415,7 +419,7 @@ export default function WeeklySchedule() {
                           onSuccess: () => {
                             //mark the current lecture as having notes
                             setSelectedLecture((prev) =>
-                              prev ? { ...prev, hasNotes: true, hasSummary: false } : prev
+                              prev ? { ...prev, hasNotes: true, hasSummary: false, noteFilename: file.name } : prev
                             );
                             //clear any cached summary for THIS lecture so user can regenerate
                             const id = String(selectedLecture.id);

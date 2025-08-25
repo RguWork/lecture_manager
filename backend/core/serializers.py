@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Course, Lecture, Attendance
@@ -16,11 +17,12 @@ class LectureSerializer(serializers.ModelSerializer):
     attended = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     has_notes = serializers.SerializerMethodField()
+    note_filename = serializers.SerializerMethodField()
 
     class Meta:
         model = Lecture
         #course is the course uuid for actual linking, course_name is the actual string name for readability
-        fields = ['id', 'course', 'course_name', 'start_dt', 'end_dt', 'location', 'attended', 'status', 'has_notes']
+        fields = ['id', 'course', 'course_name', 'start_dt', 'end_dt', 'location', 'attended', 'status', 'has_notes', 'note_filename']
 
     def get_attended(self, obj):
         #returns corresponding attendance record for a user
@@ -54,6 +56,15 @@ class LectureSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         rec = obj.attendances.filter(user=user).first()
         return bool(rec and rec.note_upload)
+    
+    def get_note_filename(self, obj):
+        user = self.context["request"].user
+        rec = obj.attendances.filter(user=user).first()
+        f = getattr(rec, "note_upload", None)
+        if not f:
+            return None
+        name = getattr(f, "name", "") or ""
+        return os.path.basename(name) if name else None
 
 class SlotSerializer(serializers.Serializer):
     #defines a Slot object, which is a recurring lecture time
@@ -87,7 +98,12 @@ class AttendanceSerializer(serializers.ModelSerializer):
         #lecture saves the uuid of the lecture this attendance object corresponds to
         fields = ['id', 'lecture', 'course_name', 'lecture_start_dt', 'attended', 'note_upload', 'created_at', 'updated_at', 'summary']
         read_only_fields = ['created_at', 'updated_at']
-        
+
+    def update(self, instance, validated_data):
+        # If a new file is uploaded, clear the existing summary
+        if "note_upload" in validated_data and validated_data["note_upload"] is not None:
+            instance.summary = None
+        return super().update(instance, validated_data)
 
 class CourseDashboardSerializer(serializers.ModelSerializer):
     #define the course model for dashboard display, which now

@@ -10,6 +10,7 @@ export interface LectureAPI {
   attended: boolean | null;
   status: LectureStatus;
   has_notes?: boolean;
+  note_filename?: string | null;
 }
 
 export interface CourseDashboardAPI {
