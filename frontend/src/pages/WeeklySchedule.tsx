@@ -58,8 +58,8 @@ export default function WeeklySchedule() {
   const uploadNote = useUploadNote();
 
   const summarizeNotes = useSummarizeAttendance();
-  const [summaryText, setSummaryText] = useState<string | null>(null);
-  const [summaryErr, setSummaryErr] = useState<string | null>(null);
+  const [summaryByLecture, setSummaryByLecture] = useState<Record<string, string>>({});
+  const [summaryErrByLecture, setSummaryErrByLecture] = useState<Record<string, string>>({});
 
   function localDate(yyyyMmDd: string) {
     const [y, m, d] = yyyyMmDd.split("-").map(Number);
@@ -179,17 +179,27 @@ export default function WeeklySchedule() {
 
   const handleGenerateOrViewSummary = () => {
     if (!selectedLecture) return;
-    setSummaryErr(null);
+    const lectureId = String(selectedLecture.id);
+    
+    setSummaryErrByLecture((m) => {
+      const next = { ...m };
+      delete next[lectureId];
+      return next;
+    });
+
     summarizeNotes.mutate(
       { lectureId: String(selectedLecture.id) },
       {
         onSuccess: (res) => {
-          setSummaryText(res.summary);
+          setSummaryByLecture((m) => ({
+               ...m, [lectureId]: res.summary 
+            })
+          );
           setSelectedLecture((prev) => (prev ? { ...prev, hasSummary: true } : prev));
         },
         onError: (err: any) => {
           const msg = err?.response?.data?.error || "Unable to generate summary.";
-          setSummaryErr(msg);
+          setSummaryErrByLecture((m) => ({ ...m, [lectureId]: msg }));
         },
       }
     );
@@ -197,6 +207,10 @@ export default function WeeklySchedule() {
 
   const canNavigatePrev = !isBefore(startOfWeek(subWeeks(currentWeek, 1)), startOfWeek(minWeek));
   const canNavigateNext = !isAfter(startOfWeek(addWeeks(currentWeek, 1)), startOfWeek(maxWeek));
+
+  const currentLectureId = selectedLecture ? String(selectedLecture.id) : null;
+  const currentSummary = currentLectureId ? summaryByLecture[currentLectureId] : undefined;
+  const currentSummaryErr = currentLectureId ? summaryErrByLecture[currentLectureId] : undefined;
 
   return (
     <div className="space-y-6">
@@ -353,7 +367,7 @@ export default function WeeklySchedule() {
                   <input
                     id="note-file"
                     type="file"
-                    accept=".pdf,.txt,.doc,.docx"
+                    accept=".pdf,.txt,.docx"
                     className="hidden"
                     onChange={onSelectNote}
                   />
@@ -377,10 +391,10 @@ export default function WeeklySchedule() {
                 {/* AI Summary */}
                 <div className="space-y-3">
                   <Label>AI Summary</Label>
-                  {summaryText ? (
+                  {currentSummary ? (
                     <div className="p-4 bg-primary/5 rounded-lg border border-primary/20 max-h-56 overflow-auto">
                       <h4 className="font-medium mb-2">Lecture Summary</h4>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{summaryText}</p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{currentSummary}</p>
                     </div>
                   ) : selectedLecture?.hasSummary ? (
                     <Button
@@ -404,7 +418,7 @@ export default function WeeklySchedule() {
                     <p className="text-sm text-muted-foreground italic">Upload notes first to generate summary</p>
                   )}
 
-                  {summaryErr && <p className="text-sm text-destructive">{summaryErr}</p>}
+                  {currentSummaryErr && <p className="text-sm text-destructive">{currentSummaryErr}</p>}
                 </div>
               </div>
             </>
