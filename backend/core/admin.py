@@ -17,6 +17,6 @@ class LectureAdmin(admin.ModelAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ("user", "lecture", "attended", "created_at", "updated_at")
+    list_display = ("user", "lecture", "attended", "note_upload", "created_at", "updated_at")
     list_filter = ("user", "lecture", "attended")
     search_fields = ("user__username", "lecture__course__name", "lecture__start_dt")

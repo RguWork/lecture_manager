@@ -67,6 +67,9 @@ class Attendance(models.Model):
     class Meta():
         unique_together = ("user", "lecture")
         ordering = ["lecture__start_dt"]
+        constraints = [
+            models.UniqueConstraint(fields=["user", "lecture"], name="uniq_user_lecture_attendance"),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.lecture} - {'✔' if self.attended else '❌'}"

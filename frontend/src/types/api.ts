@@ -9,6 +9,7 @@ export interface LectureAPI {
   location: string;
   attended: boolean | null;
   status: LectureStatus;
+  has_notes?: boolean;
 }
 
 export interface CourseDashboardAPI {

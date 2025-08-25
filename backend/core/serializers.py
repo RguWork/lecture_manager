@@ -15,12 +15,12 @@ class LectureSerializer(serializers.ModelSerializer):
     course_name = serializers.CharField(source="course.name", read_only=True)
     attended = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
-
+    has_notes = serializers.SerializerMethodField()
 
     class Meta:
         model = Lecture
         #course is the course uuid for actual linking, course_name is the actual string name for readability
-        fields = ['id', 'course', 'course_name', 'start_dt', 'end_dt', 'location', 'attended', 'status']
+        fields = ['id', 'course', 'course_name', 'start_dt', 'end_dt', 'location', 'attended', 'status', 'has_notes']
 
     def get_attended(self, obj):
         #returns corresponding attendance record for a user
@@ -49,6 +49,11 @@ class LectureSerializer(serializers.ModelSerializer):
         if obj.start_dt > now:
             return "upcoming"
         return "missed"
+    
+    def get_has_notes(self, obj):
+        user = self.context["request"].user
+        rec = obj.attendances.filter(user=user).first()
+        return bool(rec and rec.note_upload)
 
 class SlotSerializer(serializers.Serializer):
     #defines a Slot object, which is a recurring lecture time

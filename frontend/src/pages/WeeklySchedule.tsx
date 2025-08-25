@@ -104,7 +104,7 @@ export default function WeeklySchedule() {
         endTime: endHour,
         location: l.location,
         attended: Boolean(l.attended),
-        hasNotes: Boolean((l as any).has_notes), //TODO: wire soon
+        hasNotes: Boolean((l as any).has_notes),
         hasSummary: l.status === "summarized",
         rawStart: start,
       };

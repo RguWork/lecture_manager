@@ -9,9 +9,16 @@ export type Attendance = {
 };
 
 export async function getMyAttendanceForLecture(lectureId: string): Promise<Attendance | null> {
-  const { data } = await api.get("/attendances/", { params: { lecture: lectureId } });
-  const rows = Array.isArray(data) ? data : data?.results ?? [];
-  return rows[0] ?? null;
+  const { data } = await api.get("/attendances/", {
+    params: { lecture_id: lectureId },
+  });
+
+  //server may return plain [] or {results: []}
+  const rows: Attendance[] = Array.isArray(data) ? data : data?.results ?? [];
+
+  //extra safety: if the server didn't filter, pick the row that actually matches this lecture
+  const match = rows.find((r) => r.lecture === lectureId);
+  return match ?? rows[0] ?? null;
 }
 
 export async function createMyAttendance(lectureId: string): Promise<Attendance> {
@@ -31,5 +38,6 @@ export async function uploadNoteToAttendance(attendanceId: string, file: File): 
   const { data } = await api.patch(`/attendances/${attendanceId}/`, form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  console.log("Uploaded to attendance:", data.id, "note_upload:", data.note_upload);
   return data;
 }

@@ -5,6 +5,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 from django.utils import timezone
@@ -114,6 +115,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     #defines how to handle intermediate actions when the attendance api is called
     serializer_class = AttendanceSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
 
     def get_queryset(self):
         queryset = Attendance.objects.filter(user = self.request.user)
