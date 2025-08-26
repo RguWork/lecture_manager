@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from core.views import CourseViewSet, LectureViewSet, AttendanceViewSet, ImportTimetable, SummarizeNotes, DashboardView, LectureAttendanceToggle, RegisterView
+from core.views import CourseViewSet, LectureViewSet, AttendanceViewSet, ImportTimetable, SummarizeNotes, DashboardView, LectureAttendanceToggle, RegisterView, PingView
 
 router = DefaultRouter() #creates a router object that can auto generate REST urls for a viewset
 
@@ -38,4 +38,5 @@ urlpatterns = [
     path("api/dashboard/", DashboardView.as_view(), name="dashboard-view"),
     path("api/lectures/<uuid:pk>/attendance/", LectureAttendanceToggle.as_view(), name="lecture-attendance"),
     path("api/register/", RegisterView.as_view(), name="register"),
+    path("api/ping/", PingView.as_view()), #testing, remove
 ]
